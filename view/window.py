@@ -1,4 +1,4 @@
-import model.contactsDB as DB
+import model.contactsDB as db
 
 try:
     import tkinter as tk
@@ -7,39 +7,65 @@ except ImportError:  # if running with python 2.x
 
 
 def filter_list():
+    shown_list.delete(0, 'end')
     if mode_var.get() == 1:
-        contacts_list = DB.get_all_contacts()
+        contacts_list = db.get_all_contacts()
     elif mode_var.get() == 2:
-        contacts_list = DB.query_by_name(filter_query.get())
+        contacts_list = db.query_by_name(filter_query.get())
     else:
-        contacts_list = DB.query_by_email(filter_query.get())
+        contacts_list = db.query_by_email(filter_query.get())
 
     for row in contacts_list:
         shown_list.insert(tk.END, row)
 
 
 def add_contact():
-    pass
+    name = name_textfield.get()
+    phone = phone_textfield.get()
+    email = email_textfield.get()
+
+    db.add_contact(name, phone, email)
+    clear_fields()
+    shown_list.insert(tk.END, (name, phone, email))
 
 
 def clear_fields():
     name_val.set("")
-    phone_val.set(0)
+    phone_val.set("")
     email_val.set("")
-    # name_textfield.delete(0, 'end')
-    # phone_textfield.delete(0, 'end')
-    # email_textfield.delete(0, 'end')
 
 
-def select_callback():
-    list_selection = shown_list.get(shown_list.curselection())
-    name, phone, email = list_selection
-    name_val.set(name)
-    phone_val.set(phone)
-    email_val.set(email)
+def show_all_contacts():
+    c_list = db.get_all_contacts()
+    for element in c_list:
+        shown_list.insert(tk.END, element)
+
+
+def select_callback(event):
+    w = event.widget
+    index = int(w.curselection()[0])
+    list_selection = w.get(index)
+    if list_selection:
+        name, phone, email = list_selection
+        name_val.set(name)
+        phone_val.set(phone)
+        email_val.set(email)
+
+
+def populate_listbox(contacts_list):
+    for contact in contacts_list:
+        shown_list.insert(tk.END, contact)
+
+
+def save_to_file():
+    with open('contacts_backup.txt', 'w') as backup:
+        for contact in db.get_all_contacts():
+            print(contact, file=backup)
 
 
 if __name__ == "__main__":
+
+    # Creating the window
     main_window = tk.Tk()
     main_window.title("Contacts Manager")
     main_window.geometry("540x380")
@@ -57,6 +83,7 @@ if __name__ == "__main__":
     shown_list.grid(row=0, column=0, rowspan=7)
     shown_list.config(width=40)
     shown_list.bind('<<ListboxSelect>>', select_callback)
+    populate_listbox(db.get_all_contacts())
 
     # Configuring the scrollbar for the list
     list_scrollbar = tk.Scrollbar(list_frame, orient=tk.VERTICAL, command=shown_list.yview)
@@ -73,7 +100,7 @@ if __name__ == "__main__":
 
     # Initializing the value for the variables to bind to the text fields.
     name_val = tk.StringVar()
-    phone_val = tk.IntVar()
+    phone_val = tk.StringVar()
     email_val = tk.StringVar()
 
     # Configuring a frame to hold the frames that hold the labels and textfield for name, phone and email
@@ -88,7 +115,7 @@ if __name__ == "__main__":
     phone_frame = tk.Frame(fields_frame)
     phone_frame.grid(row=1, column=0, sticky='nw')
     tk.Label(phone_frame, text="Phone:").grid(row=0, column=0, sticky='sw')
-    phone_textfield = tk.Entry(phone_frame, variable=phone_val)
+    phone_textfield = tk.Entry(phone_frame, textvariable=phone_val)
     phone_textfield.grid(row=1, column=0)
 
     # Email frame
@@ -132,5 +159,6 @@ if __name__ == "__main__":
     # Configuring the add and clear buttons
     tk.Button(add_clear_frame, text="Add Contact", command=add_contact).grid(row=0, column=0)
     tk.Button(add_clear_frame, text="Clear Fields", command=clear_fields).grid(row=0, column=1)
+    tk.Button(add_clear_frame, text="Save to a file...", command=save_to_file).grid(row=0, column=2)
 
     main_window.mainloop()

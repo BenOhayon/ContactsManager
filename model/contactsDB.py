@@ -1,5 +1,5 @@
 import sqlite3
-
+import os.path
 
 def create_tables(*tables):
     for table_name in tables:
@@ -28,6 +28,7 @@ def query_by_email(email):
 
 def add_contact(name, phone, email):
     db_conn.execute("insert into contacts(name, phone, email) values(?, ?, ?)", (name, phone, email))
+    db_conn.commit()
 
 
 def get_all_contacts():
@@ -39,8 +40,5 @@ def get_all_contacts():
     return result
 
 
-db_conn = sqlite3.connect("managerDB.db")
+db_conn = sqlite3.connect("managerDB.sqlite")
 create_tables('contacts')
-add_contact("Ben", 1597563, "ben@email.com")
-add_contact("Tim", 7531598, "tim@email.com")
-add_contact("Robert", 1564249, "robert@email.com")
